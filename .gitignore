@@ -1,0 +1,6 @@
+.idea/
+libs/
+out/
+target/
+*.class
+extra/
