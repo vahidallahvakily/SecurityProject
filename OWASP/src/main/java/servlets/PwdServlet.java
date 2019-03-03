@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Logger;
@@ -40,12 +41,9 @@ public class PwdServlet extends HttpServlet {
 
         try (Connection connection = ds.getConnection()) {
 
-            Statement st = connection.createStatement();
-
-            //FIXME: OWASP A2:2017 - Broken Authentication
-            //  Username is determined based on client-provided information
-            //  Session not checked
-            String username = request.getParameter("username");
+          
+            //usernmae is saved in session
+            String username = (String) request.getSession().getAttribute("username");
 
             //FIXME: OWASP A3:2017 - Sensitive Data Exposure
             // 1) URLs are often logged by web servers.
@@ -64,11 +62,10 @@ public class PwdServlet extends HttpServlet {
             //  3) password complexity
             //  4) password length
 
-            //FIXME: OWASP A1:2017 - Injection
+            //Resolved it by Password Correction 
             String query = String.format("update users " +
-                            "set password = '%s' " +
-                            "where username = '%s'",
-                    password, username);
+                            "set password = ? " +
+                            "where username = ? ");
 
             //FIXME: OWASP A3:2017 - Sensitive Data Exposure
             // Log reveals sensitive info
@@ -77,7 +74,10 @@ public class PwdServlet extends HttpServlet {
             //FIXME: OWASP A10:2017 - Insufficient Logging & Monitoring
             // return value not logged
             //FIXME: OWASP A8:2013 - CSRF
-            st.executeUpdate(query);
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, username);
+            stmt.setString(2,password);
+            stmt.executeUpdate();
 
             //FIXME: OWASP A5:2017 - Broken Access Control
             //  Cookie used without any signature
@@ -97,4 +97,5 @@ public class PwdServlet extends HttpServlet {
             logger.warning(sqlException.getMessage());
         }
     }
+
 }
