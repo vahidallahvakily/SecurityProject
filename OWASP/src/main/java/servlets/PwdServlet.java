@@ -9,10 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.logging.Logger;
 
 @WebServlet("/pwd.do")
@@ -33,7 +30,7 @@ public class PwdServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request,
+    protected void doPost(HttpServletRequest request,
                          HttpServletResponse response)
             throws IOException {
 
@@ -45,15 +42,46 @@ public class PwdServlet extends HttpServlet {
             //usernmae is saved in session
             String username = (String) request.getSession().getAttribute("username");
 
-            //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-            // 1) URLs are often logged by web servers.
-            //    Sensitive data such as passwords must not be included in URLs.
-            //    Use POST method!
-            // 2) Use TLS.
             String password = request.getParameter("password");
 
-            //FIXME: OWASP A5:2017 - Broken Access Control
-            // Old password not checked
+            String oldPassword = request.getParameter("old");
+
+            String confirmPassword = request.getParameter("confirm");
+
+            //---Get the password by Username
+            String query = "select password from users " +
+                            "where username = ? ";
+
+            PreparedStatement st = connection.prepareStatement(query);
+             st.setString(1,username);
+
+            ResultSet rs = st.executeQuery();
+
+            if (!rs.next()) {
+                logger.warning("User not found!");
+
+                response.sendRedirect(response.encodeRedirectURL("failedChangePwd.jsp"));
+                return;
+            }
+
+            if(!oldPassword.equalsIgnoreCase(rs.getString("password"))){
+                logger.warning("old Password is not correct");
+                response.sendRedirect(response.encodeRedirectURL("failedChangePwd.jsp"));
+                return;
+            }
+
+            if(!password.equalsIgnoreCase(confirmPassword)){
+                logger.warning("password doesnot match confirm password!");
+                response.sendRedirect(response.encodeRedirectURL("failedChangePwd.jsp"));
+                return;
+            }
+
+
+            if(oldPassword.equalsIgnoreCase(password)){
+                logger.warning("new password match the old password");
+                response.sendRedirect(response.encodeRedirectURL("failedChangePwd.jsp"));
+                return;
+            }
 
             //FIXME: OWASP A5:2017 - Broken Access Control
             // Security policies not checked:
@@ -63,7 +91,7 @@ public class PwdServlet extends HttpServlet {
             //  4) password length
 
             //Resolved it by Password Correction 
-            String query = String.format("update users " +
+            query = String.format("update users " +
                             "set password = ? " +
                             "where username = ? ");
 
@@ -75,10 +103,10 @@ public class PwdServlet extends HttpServlet {
             // return value not logged
             //FIXME: OWASP A8:2013 - CSRF
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setString(1, username);
-            stmt.setString(2,password);
-            stmt.executeUpdate();
-
+            stmt.setString(1, password);
+            stmt.setString(2,username);
+            int result=  stmt.executeUpdate();
+            logger.info("update password. Affected rows : "+result);
             //FIXME: OWASP A5:2017 - Broken Access Control
             //  Cookie used without any signature
             //FIXME: OWASP A3:2017 - Sensitive Data Exposure
