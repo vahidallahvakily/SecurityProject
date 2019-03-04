@@ -143,6 +143,7 @@ public class LoginServlet extends HttpServlet {
         //  For same-site, see: https://stackoverflow.com/a/43106260/459391
         //      response.setHeader("Set-Cookie", "key=value; HttpOnly; SameSite=strict")
 
+        request.getSession().setAttribute("username",username);
         //FIXME: OWASP A5:2017 - Broken Access Control
         //  Cookie used without any signature
         Cookie uCookie = new Cookie("username", username);

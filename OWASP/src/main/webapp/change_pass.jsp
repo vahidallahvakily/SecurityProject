@@ -9,13 +9,7 @@
 
     <hr>
 
-    <%--FIXME: OWASP A3:2017 - Sensitive Data Exposure
-        1) URLs are often logged by web servers.
-           Sensitive data such as passwords must not be included in URLs.
-           Use POST method!
-        2) Use TLS.
-    --%>
-    <form id="frm" action="pwd.do" method="get">
+    <form id="frm" action="pwd.do" method="post">
         <%--FIXME: OWASP A2:2017 - Broken Authentication
             Username is determined based on client-provided information
         --%>
