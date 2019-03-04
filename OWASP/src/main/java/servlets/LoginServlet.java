@@ -3,17 +3,18 @@ package servlets;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 @WebServlet("/login.do")
 public class LoginServlet extends HttpServlet {
@@ -21,6 +22,8 @@ public class LoginServlet extends HttpServlet {
     private static DataSource ds;
 
     private Logger logger = Logger.getLogger(getClass().getName());
+
+    private static Pattern usernamePattern = Pattern.compile("^[A-Za-z0-9_.]+$");
 
     static {
         try {
@@ -32,40 +35,54 @@ public class LoginServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request,
+    protected void doPost(HttpServletRequest request,
                          HttpServletResponse response)
             throws IOException {
 
         logger.info("Received request from " + request.getRemoteAddr());
 
+        HttpSession session = request.getSession(false);
+        String csrf = request.getParameter("csrf");
+
+        if (session == null
+                || csrf == null
+                || csrf.length() != 32
+                || !csrf.equals(session.getAttribute("csrf"))) {
+
+            logger.info("CSRF detected!");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "CSRF detected!");
+            return;
+        }
+
+        session.removeAttribute("csrf");
+
+        if (session.getAttribute("userId") != null) {
+            logger.warning("User already logged in...");
+            response.sendRedirect(String.format("%s/error.jsp?errno=4", request.getContextPath()));
+            return;
+        }
+
         String userParam = request.getParameter("username");
         String passParam = request.getParameter("password");
 
-        //FIXME: OWASP A7:2017 - Cross-Site Scripting (XSS)
-        // Category: Reflected XSS (AKA Non-Persistent or Type II)
-        // Category: Server XSS
-
-        // Resolution 1: Use Content-Security-Policy (CSP)
-        // Resolution 2: Sanitize input (as always!)
-        if (userParam == null || passParam == null) {
-            response.setContentType("text/html; charset=UTF-8");
-
-            // NOTE: Internet Explorer, Chrome and Safari have a builtin "XSS filter" to prevent this.
-            // Unless "X-XSS-Protection" is disabled, as shown below:
-
-            // response.setHeader("X-XSS-Protection", "0");
-
-            // Firefox, however, does not prevent reflected XSS.
-            // See "Firefox - X-XSS-Protection Support.txt" for more info!
-
-            response.getWriter().printf("Either username or password is not provided.\n" +
-                            "Please check your input:\n" +
-                            "Username = %s\n" +
-                            "Password = %s",
-                    userParam, passParam);
-
+        if (userParam.length() > 50 || passParam.length() > 50) {
+            logger.warning("Too long username or password.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "Too long username or password.");
             return;
         }
+
+        if (!usernamePattern.matcher(userParam).matches()) {
+            logger.warning("Invalid characters in username.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid characters in username.");
+            return;
+        }
+
+        String jasypt_pass;
+        int userId;
+        List<String> groups = new ArrayList<>();
+
 
         //FIXME: OWASP A1:2017 - Injection
         //FIXME: Use "LIMIT 1" at the end of query to improve performance
@@ -105,29 +122,22 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        //FIXME: OWASP A2:2017 - Broken Authentication
-        //  Parameter "Remember me" is not observed
-        //  Cookie security settings (httpOnly, secure, age, domain, path, same-site)
-        //  For same-site, see: https://stackoverflow.com/a/43106260/459391
-        //      response.setHeader("Set-Cookie", "key=value; HttpOnly; SameSite=strict")
+        session.invalidate();
+        session = request.getSession(true);
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        //  Cookie used without any signature
-        Cookie uCookie = new Cookie("username", username);
-        response.addCookie(uCookie);
+        //session.setAttribute("userId", userId);
+        session.setAttribute("username", userParam);
+        session.setAttribute("groups", groups);
+        session.setAttribute("loginTime", Instant.now());
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        //  Cookie used without any signature
-        //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-        //  Password stored as plaintext on client-side
-        Cookie pCookie = new Cookie("password", password);
-        response.addCookie(pCookie);
-
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        //  Cookie used without any signature
-        Cookie rCookie = new Cookie("role", role);
-        response.addCookie(rCookie);
-
-        response.sendRedirect("user.jsp");
+        if (groups.contains("admins"))
+            response.sendRedirect(String.format("%s/admins/", request.getContextPath()));
+        else if (groups.contains("users"))
+            response.sendRedirect(String.format("%s/users/", request.getContextPath()));
+        else if (groups.contains("guests"))
+            response.sendRedirect(String.format("%s/guests.html", request.getContextPath()));
+        else
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "You are group-less!");
     }
 }
