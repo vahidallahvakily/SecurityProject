@@ -44,7 +44,7 @@
         <div class="col-md-2">Created At</div>
     </div>
 
-    <form action="admin.do">
+    <form action="admin.do" method="POST">
 
         <c:forEach var="row" items="${result.rows}">
             <div class="row tr">

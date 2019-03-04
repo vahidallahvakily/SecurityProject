@@ -9,10 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.logging.Logger;
 
 @WebServlet("/login.do")
@@ -69,7 +66,7 @@ public class LoginServlet extends HttpServlet {
 
         //FIXME: OWASP A1:2017 - Injection
         //FIXME: Use "LIMIT 1" at the end of query to improve performance
-        String query = String.format("select * from users " +
+        /*String query = String.format("select * from users " +
                         "where username = '%s' " +
                         "and password = '%s'",
                 userParam, passParam);
@@ -90,6 +87,41 @@ public class LoginServlet extends HttpServlet {
                 logger.warning("User not found!");
 
                 response.sendRedirect(response.encodeRedirectURL("failed.jsp"));
+                return;
+            }
+
+            username = rs.getString("username");
+            password = rs.getString("password");
+            role = rs.getString("role");
+
+            logger.info("User found.");
+
+        } catch (SQLException sqlException) {
+            logger.warning(sqlException.getMessage());
+            response.sendRedirect("failed.jsp");
+            return;
+        }*/
+
+
+        logger.info("Received request from " + request.getRemoteAddr());
+
+        String username, password, role;
+
+        try (Connection connection = ds.getConnection()) {
+
+            // Prepared statements are NOT susceptible to SQL Injection
+            PreparedStatement pstmt = connection.prepareStatement(
+                    "select * from users where username = ? and password = ? LIMIT 1");
+
+            pstmt.setString(1, userParam);
+            pstmt.setString(2, passParam);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (!rs.next()) {
+                logger.info("User not found!");
+
+                response.sendRedirect("failed.jsp");
                 return;
             }
 

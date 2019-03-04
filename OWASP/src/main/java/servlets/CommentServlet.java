@@ -42,6 +42,11 @@ public class CommentServlet extends HttpServlet {
 
         String comment = request.getParameter("comment");
 
+        //FIXED By Sanitization
+
+        if (comment != null)
+            comment = comment.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
         //FIXME: OWASP A1:2017 - Injection
         String query = String.format("INSERT INTO guestbook (userId, comment) " +
                         "VALUES ((SELECT id FROM users WHERE username='%s'), '%s')",
@@ -53,9 +58,11 @@ public class CommentServlet extends HttpServlet {
 
             //FIXME: OWASP A10:2017 - Insufficient Logging & Monitoring
             // return value not logged
-            //FIXME: OWASP A8:2013 - CSRF
-            st.executeUpdate(query);
+            //FIXED By logging
 
+            //FIXME: OWASP A8:2013 - CSRF
+           int result = st.executeUpdate(query);
+            logger.info("user "+ username + "commented: "+ comment + " with result: "+ result);
         } catch (SQLException sqlException) {
             logger.warning(sqlException.getMessage());
 

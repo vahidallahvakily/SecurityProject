@@ -33,8 +33,10 @@
         See:
         https://tomcat.apache.org/tomcat-9.0-doc/config/filter.html#CSRF_Prevention_Filter
     -->
+<!--
+FIXED By CSRF Filter
 
-  <!--   <filter>
+     <filter>
          <filter-name>CSRF</filter-name>
          <filter-class>filters.myCatalina.MyCsrfPreventionFilter</filter-class>
          <init-param>
