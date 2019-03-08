@@ -2,6 +2,7 @@ package filters;
 
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -27,8 +28,9 @@ public class CSPFilter implements Filter {
                          FilterChain chain) throws IOException, ServletException {
 
         HttpServletResponse httpResponse = (HttpServletResponse) response;
-        httpResponse.setHeader("Content-Security-Policy", "alaki 'self'");
-
+        HttpServletRequest httpRequest= (HttpServletRequest) request;
+        httpResponse.setHeader("Content-Security-Policy", "script-src 'self'");
+        httpResponse.setHeader("Set-Cookie", "HttpOnly; SameSite=strict");
         chain.doFilter(request, response);
     }
 

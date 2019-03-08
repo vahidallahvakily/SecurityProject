@@ -9,7 +9,7 @@
 
     <hr>
 
-    <form id="frm" action="pwd.do" method="post">
+    <form id="frmChangePassword" action="pwd.do" method="post">
         <%--FIXME: OWASP A2:2017 - Broken Authentication
             Username is determined based on client-provided information
         --%>
@@ -40,37 +40,7 @@
 
         <button type="submit" class="btn btn-warning btn-lg">Submit</button>
     </form>
-
-    <script>
-        var frm = $("#frm");
-        var cookie_pwd = Cookies.get("password");
-
-        frm.submit(function (event) {
-            var old = $("#old").val();
-            var password = $("#password").val();
-            var confirm = $("#confirm").val();
-
-            <%--FIXME: OWASP A5:2017 - Broken Access Control
-                Password confirmation is only performed on client side
-            --%>
-            if (old !== cookie_pwd) {
-                bootbox.alert("Invalid old password!");
-                event.preventDefault();
-                return;
-            }
-
-            if (password.length === 0) {
-                bootbox.alert("Please enter a password!");
-                event.preventDefault();
-                return;
-            }
-
-            if (password !== confirm) {
-                bootbox.alert("Confirmation doesn't match the password!");
-                event.preventDefault();
-            }
-        })
-    </script>
 </div>
+<script src="/static/js/other.js" />
 </body>
 </html>

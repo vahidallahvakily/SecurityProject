@@ -137,29 +137,14 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        //FIXME: OWASP A2:2017 - Broken Authentication
-        //  Parameter "Remember me" is not observed
-        //  Cookie security settings (httpOnly, secure, age, domain, path, same-site)
-        //  For same-site, see: https://stackoverflow.com/a/43106260/459391
-        //      response.setHeader("Set-Cookie", "key=value; HttpOnly; SameSite=strict")
-
         request.getSession().setAttribute("username",username);
+        request.getSession().setAttribute("role",role);
         //FIXME: OWASP A5:2017 - Broken Access Control
         //  Cookie used without any signature
-        Cookie uCookie = new Cookie("username", username);
+        Cookie uCookie = new Cookie("token", username);
         response.addCookie(uCookie);
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        //  Cookie used without any signature
-        //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-        //  Password stored as plaintext on client-side
-        Cookie pCookie = new Cookie("password", password);
-        response.addCookie(pCookie);
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        //  Cookie used without any signature
-        Cookie rCookie = new Cookie("role", role);
-        response.addCookie(rCookie);
 
         response.sendRedirect("user.jsp");
     }
