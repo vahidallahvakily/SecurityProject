@@ -37,7 +37,7 @@ public class AdminServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request,
+    protected void doPost(HttpServletRequest request,
                          HttpServletResponse response)
             throws IOException {
 
@@ -84,9 +84,12 @@ public class AdminServlet extends HttpServlet {
 
             //FIXME: OWASP A10:2017 - Insufficient Logging & Monitoring
             // return value not logged
+            //FIXED By Logging result
             //FIXME: OWASP A1:2017 - Injection
             //FIXME: OWASP A8:2013 - CSRF
-            st.executeUpdate(query.toString());
+            int result = st.executeUpdate(query.toString());
+
+            logger.info("Query result: " + result);
 
             response.sendRedirect("admin.jsp");
 

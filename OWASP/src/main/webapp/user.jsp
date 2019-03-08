@@ -27,7 +27,6 @@
             Cookie: username=kambiz<script>alert(45)</script>; password=1; role=admin
     --%>
     <c:set var="username" value="${cookie['username'].value}" scope="page"/>
-    <c:set var="password" value="${cookie['password'].value}" scope="page"/>
     <c:set var="role" value="${cookie['role'].value}" scope="page"/>
 
 
@@ -62,8 +61,8 @@
             Sensitive information is added to DOM (Document Object Model)
             It's accessible by JavaScript, even if the cookie isn't
         --%>
-        <div style="font-weight: bold;" class="col-md-3">Your password is:</div>
-        <div class="col-md-3">${password}</div>
+        <div style="font-weight: bold;" class="col-md-3"></div>
+        <div class="col-md-3"></div>
         <div class="col-md-3">
             <a href="change_pass.jsp">
                 <button class="btn btn-dark">Change Password</button>

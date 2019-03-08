@@ -3,6 +3,7 @@
 <head>
     <title>GDPR</title>
     <jsp:include page="common.jsp"/>
+
 </head>
 <body>
 
@@ -70,16 +71,9 @@
         </div>
     </form>
 
-    <script>
-        $('#xfile').on('change', function () {
-            //get the file name
-            var fileName = $(this).val();
-            //replace the "Choose a file" label
-            $(this).next('.custom-file-label').html(fileName);
-        })
-    </script>
-
 
 </div>
 </body>
+<script src="/static/js/other.js" type="application/javascript"/>
 </html>
+
