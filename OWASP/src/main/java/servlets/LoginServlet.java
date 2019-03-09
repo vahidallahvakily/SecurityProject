@@ -11,12 +11,15 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import org.jasypt.util.password.StrongPasswordEncryptor;
 
 @WebServlet("/login.do")
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = -1813590570829849128L;
     private static DataSource ds;
 
+    private static Pattern usernamePattern = Pattern.compile("^[A-Za-z0-9_.]+$");
     private Logger logger = Logger.getLogger(getClass().getName());
 
     static {
@@ -38,6 +41,13 @@ public class LoginServlet extends HttpServlet {
         String userParam = request.getParameter("username");
         String passParam = request.getParameter("password");
 
+        if (!usernamePattern.matcher(userParam).matches()) {
+            logger.warning("Invalid characters in username.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid characters in username.");
+            return;
+        }
+
         //FIXME: OWASP A7:2017 - Cross-Site Scripting (XSS)
         // Category: Reflected XSS (AKA Non-Persistent or Type II)
         // Category: Server XSS
@@ -54,12 +64,6 @@ public class LoginServlet extends HttpServlet {
 
             // Firefox, however, does not prevent reflected XSS.
             // See "Firefox - X-XSS-Protection Support.txt" for more info!
-
-            response.getWriter().printf("Either username or password is not provided.\n" +
-                            "Please check your input:\n" +
-                            "Username = %s\n" +
-                            "Password = %s",
-                    userParam, passParam);
 
             return;
         }
@@ -106,6 +110,7 @@ public class LoginServlet extends HttpServlet {
         logger.info("Received request from " + request.getRemoteAddr());
 
         String username, password, role;
+        String jasypt_pass;
 
         try (Connection connection = ds.getConnection()) {
 
@@ -125,11 +130,28 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
+            jasypt_pass = rs.getString("JASYPT_PASS");
+            StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+
+            if (!passwordEncryptor.checkPassword(passParam, jasypt_pass)) {
+                logger.warning(String.format("Attempted login by username %s with wrong password.",
+                        userParam));
+
+                // The error should NOT differ from the case where username is wrong,
+                // to prevent "username harvesting"
+                response.sendRedirect(String.format("%s/error.jsp?errno=0", request.getContextPath()));
+                return;
+            }
+
             username = rs.getString("username");
             password = rs.getString("password");
             role = rs.getString("role");
+            userId = rs.getInt("id");
 
-            logger.info("User found.");
+            pstmt = connection.prepareStatement(
+                    "update users set LAST_LOGON = CURRENT_TIMESTAMP where id = ? LIMIT 1");
+            pstmt.setInt(1, userId);
+            pstmt.executeUpdate();
 
         } catch (SQLException sqlException) {
             logger.warning(sqlException.getMessage());
