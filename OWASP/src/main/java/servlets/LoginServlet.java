@@ -25,7 +25,7 @@ public class LoginServlet extends HttpServlet {
     static {
         try {
             InitialContext ctx = new InitialContext();
-            ds = (DataSource) ctx.lookup("jdbc/MySQL_readonly_DataSource");
+            ds = (DataSource) ctx.lookup("jdbc/MySQL_root_DataSource");
         } catch (NamingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -116,10 +116,9 @@ public class LoginServlet extends HttpServlet {
 
             // Prepared statements are NOT susceptible to SQL Injection
             PreparedStatement pstmt = connection.prepareStatement(
-                    "select * from users where username = ? and password = ? LIMIT 1");
+                    "select * from users where username = ?  LIMIT 1");
 
             pstmt.setString(1, userParam);
-            pstmt.setString(2, passParam);
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -129,9 +128,9 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect("failed.jsp");
                 return;
             }
-
-            jasypt_pass = rs.getString("JASYPT_PASS");
             StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+
+            jasypt_pass = rs.getString("password");
 
             if (!passwordEncryptor.checkPassword(passParam, jasypt_pass)) {
                 logger.warning(String.format("Attempted login by username %s with wrong password.",
@@ -146,12 +145,14 @@ public class LoginServlet extends HttpServlet {
             username = rs.getString("username");
             password = rs.getString("password");
             role = rs.getString("role");
-            userId = rs.getInt("id");
+            int userId = rs.getInt("id");
+
 
             pstmt = connection.prepareStatement(
                     "update users set LAST_LOGON = CURRENT_TIMESTAMP where id = ? LIMIT 1");
             pstmt.setInt(1, userId);
             pstmt.executeUpdate();
+
 
         } catch (SQLException sqlException) {
             logger.warning(sqlException.getMessage());

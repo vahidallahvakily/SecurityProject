@@ -49,33 +49,34 @@ FIXED By CSRF Filter
          <filter-name>CSRF</filter-name>
          <url-pattern>/*</url-pattern>
      </filter-mapping>-->
+    <!--
+     <filter>
+         <filter-name>CSRF</filter-name>
+         <filter-class>filters.myCatalina.MyCsrfPreventionFilter</filter-class>
+         <init-param>
+             <param-name>entryPoints</param-name>
+             <param-value>/index.jsp</param-value>
+         </init-param>
+     </filter>
 
-    <filter>
-        <filter-name>CSRF</filter-name>
-        <filter-class>filters.myCatalina.MyCsrfPreventionFilter</filter-class>
-        <init-param>
-            <param-name>entryPoints</param-name>
-            <param-value>/index.jsp</param-value>
-        </init-param>
-    </filter>
+     <filter-mapping>
+         <filter-name>CSRF</filter-name>
+         <url-pattern>/*</url-pattern>
+     </filter-mapping>
 
-    <filter-mapping>
-        <filter-name>CSRF</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
 
-    <filter>
-        <filter-name>CookieSignatureFilter</filter-name>
-        <filter-class>filters.CookieSignatureCheckerFilter</filter-class>
-        <init-param>
-            <param-name>entryPoints</param-name>
-            <param-value>/index.jsp</param-value>
-        </init-param>
-    </filter>
+     <filter>
+         <filter-name>CookieSignatureFilter</filter-name>
+         <filter-class>filters.CookieSignatureCheckerFilter</filter-class>
+         <init-param>
+             <param-name>entryPoints</param-name>
+             <param-value>/index.jsp</param-value>
+         </init-param>
+     </filter>
 
-    <filter-mapping>
-        <filter-name>CookieSignatureFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-
+     <filter-mapping>
+         <filter-name>CookieSignatureFilter</filter-name>
+         <url-pattern>/*</url-pattern>
+     </filter-mapping>
+ -->
 </web-app>
