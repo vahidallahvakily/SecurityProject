@@ -23,7 +23,7 @@
         <res-auth>Container</res-auth>
     </resource-ref>
 
-    <!--FIXME: OWASP A3:2017 - Sensitive Data Exposure-->
+    <!--DONE: OWASP A3:2017 - Sensitive Data Exposure-->
     <error-page>
         <exception-type>java.lang.Throwable</exception-type>
         <location>/WEB-INF/throwable.jsp</location>
@@ -33,50 +33,36 @@
         See:
         https://tomcat.apache.org/tomcat-9.0-doc/config/filter.html#CSRF_Prevention_Filter
     -->
-<!--
-FIXED By CSRF Filter
 
-     <filter>
-         <filter-name>CSRF</filter-name>
-         <filter-class>filters.myCatalina.MyCsrfPreventionFilter</filter-class>
-         <init-param>
-             <param-name>entryPoints</param-name>
-             <param-value>/index.jsp</param-value>
-         </init-param>
-     </filter>
 
-     <filter-mapping>
-         <filter-name>CSRF</filter-name>
-         <url-pattern>/*</url-pattern>
-     </filter-mapping>-->
+        <filter>
+            <filter-name>CSRF</filter-name>
+            <filter-class>filters.myCatalina.MyCsrfPreventionFilter</filter-class>
+            <init-param>
+                <param-name>entryPoints</param-name>
+                <param-value>/index.jsp</param-value>
+            </init-param>
+        </filter>
+
+        <filter-mapping>
+            <filter-name>CSRF</filter-name>
+            <url-pattern>/*</url-pattern>
+        </filter-mapping>
+
     <!--
-     <filter>
-         <filter-name>CSRF</filter-name>
-         <filter-class>filters.myCatalina.MyCsrfPreventionFilter</filter-class>
-         <init-param>
-             <param-name>entryPoints</param-name>
-             <param-value>/index.jsp</param-value>
-         </init-param>
-     </filter>
+             <filter>
+                 <filter-name>CookieSignatureFilter</filter-name>
+                 <filter-class>filters.CookieSignatureCheckerFilter</filter-class>
+                 <init-param>
+                     <param-name>entryPoints</param-name>
+                     <param-value>/index.jsp</param-value>
+                 </init-param>
+             </filter>
 
-     <filter-mapping>
-         <filter-name>CSRF</filter-name>
-         <url-pattern>/*</url-pattern>
-     </filter-mapping>
+             <filter-mapping>
+                 <filter-name>CookieSignatureFilter</filter-name>
+                 <url-pattern>/*</url-pattern>
+             </filter-mapping>
+        -->
 
-
-     <filter>
-         <filter-name>CookieSignatureFilter</filter-name>
-         <filter-class>filters.CookieSignatureCheckerFilter</filter-class>
-         <init-param>
-             <param-name>entryPoints</param-name>
-             <param-value>/index.jsp</param-value>
-         </init-param>
-     </filter>
-
-     <filter-mapping>
-         <filter-name>CookieSignatureFilter</filter-name>
-         <url-pattern>/*</url-pattern>
-     </filter-mapping>
- -->
 </web-app>

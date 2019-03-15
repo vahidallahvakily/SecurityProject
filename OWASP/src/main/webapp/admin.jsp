@@ -17,10 +17,10 @@
 </head>
 <body>
 <div class="container">
-    <%--FIXME: OWASP A5:2017 - Broken Access Control
+    <%--DONE: OWASP A5:2017 - Broken Access Control
         This page must not be accessible to unauthenticated users
     --%>
-    <%--FIXME: OWASP A2:2017 - Broken Authentication
+    <%--DONE: OWASP A2:2017 - Broken Authentication
         Session data about the currently authenticated user is retrieved from cookies
     --%>
 
@@ -46,7 +46,7 @@
     </div>
 
     <form action="admin.do" method="POST">
-
+        <INPUT type="HIDDEN" name="CSRF_NONCE" value="<%=response.encodeURL(null)%>">
         <c:forEach var="row" items="${result.rows}">
             <div class="row tr">
                 <div class="col-md-2">
@@ -62,7 +62,7 @@
                     Map map = (Map) pageContext.findAttribute("row");
                 %>
 
-                    <%--FIXME: OWASP A7:2017 - Cross-Site Scripting (XSS)--%>
+                    <%--DONE: OWASP A7:2017 - Cross-Site Scripting (XSS)--%>
                     <%--Category: Stored XSS (AKA Persistent or Type I)--%>
                     <%--Category: Server XSS--%>
                     <%--Resolution 1: Use "Expression Language (EL)" instead of "scriptlets".

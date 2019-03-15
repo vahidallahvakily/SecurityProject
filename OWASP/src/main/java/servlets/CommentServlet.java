@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Logger;
@@ -23,8 +24,8 @@ public class CommentServlet extends HttpServlet {
     static {
         try {
             InitialContext ctx = new InitialContext();
-            //FIXME: OWASP A5:2017 - Broken Access Control (root privileges)
-            ds = (DataSource) ctx.lookup("jdbc/MySQL_root_DataSource");
+            //DONE: OWASP A5:2017 - Broken Access Control (root privileges)
+            ds = (DataSource) ctx.lookup("jdbc/MySQL_crud_DataSource");
         } catch (NamingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -37,8 +38,9 @@ public class CommentServlet extends HttpServlet {
 
         logger.info("Received request from " + request.getRemoteAddr());
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        String username = request.getParameter("username");
+        //DONE: OWASP A5:2017 - Broken Access Control
+        String username = request.getSession().getAttribute("username").toString();
+        String userId = request.getSession().getAttribute("userId").toString();
 
         String comment = request.getParameter("comment");
 
@@ -47,21 +49,21 @@ public class CommentServlet extends HttpServlet {
         if (comment != null)
             comment = comment.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
-        //FIXME: OWASP A1:2017 - Injection
+        //DONE: OWASP A1:2017 - Injection
         String query = String.format("INSERT INTO guestbook (userId, comment) " +
-                        "VALUES ((SELECT id FROM users WHERE username='%s'), '%s')",
-                username, comment);
+                        "VALUES (?, ?)");
 
 
         try (Connection connection = ds.getConnection()) {
-            Statement st = connection.createStatement();
-
-            //FIXME: OWASP A10:2017 - Insufficient Logging & Monitoring
+            PreparedStatement st = connection.prepareStatement(query);
+            st.setInt(1,Integer.parseInt(userId));
+            st.setString(2,comment);
+            //DONE: OWASP A10:2017 - Insufficient Logging & Monitoring
             // return value not logged
             //FIXED By logging
 
-            //FIXME: OWASP A8:2013 - CSRF
-           int result = st.executeUpdate(query);
+            //DONE: OWASP A8:2013 - CSRF
+           int result = st.executeUpdate();
             logger.info("user "+ username + "commented: "+ comment + " with result: "+ result);
         } catch (SQLException sqlException) {
             logger.warning(sqlException.getMessage());

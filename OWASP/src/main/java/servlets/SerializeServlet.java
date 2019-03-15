@@ -42,8 +42,8 @@ public class SerializeServlet extends HttpServlet {
 
         ServletOutputStream out = response.getOutputStream();
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        String username = request.getParameter("username");
+        //DONE: OWASP A5:2017 - Broken Access Control
+        String username = request.getSession().getAttribute("username").toString();
         if (username == null || "".equals(username)) {
             logger.warning("Empty username.");
             out.println("Empty username.");
@@ -64,8 +64,7 @@ public class SerializeServlet extends HttpServlet {
 
             if (!rs.next()) {
                 logger.warning("Username not found!");
-                //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-                out.println("Username not found!");
+                //DONE: OWASP A3:2017 - Sensitive Data Exposure
                 return;
             }
 
@@ -79,8 +78,8 @@ public class SerializeServlet extends HttpServlet {
 
         } catch (SQLException e) {
             logger.warning(e.getMessage());
-            //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-            out.println(e.getMessage());
+            //DONE: OWASP A3:2017 - Sensitive Data Exposure
+            out.println("Error in Deserialization. Contact Admin");
             return;
         }
 
@@ -91,8 +90,8 @@ public class SerializeServlet extends HttpServlet {
                     String.format("attachment; filename=\"%s.ser\"", username));
         } catch (IOException e) {
             logger.warning(e.getMessage());
-            //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-            out.println(e.getMessage());
+            //DONE: OWASP A3:2017 - Sensitive Data Exposure
+            out.println("Error in Deserialization. Contact Admin");
         }
     }
 }

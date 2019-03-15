@@ -22,8 +22,8 @@ public class PwdServlet extends HttpServlet {
     static {
         try {
             InitialContext ctx = new InitialContext();
-            //FIXME: OWASP A5:2017 - Broken Access Control (root privileges)
-            ds = (DataSource) ctx.lookup("jdbc/MySQL_root_DataSource");
+            //DONE: OWASP A5:2017 - Broken Access Control (root privileges)
+            ds = (DataSource) ctx.lookup("jdbc/MySQL_crud_DataSource");
         } catch (NamingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -95,29 +95,27 @@ public class PwdServlet extends HttpServlet {
                             "set password = ? " +
                             "where username = ? ");
 
-            //FIXME: OWASP A3:2017 - Sensitive Data Exposure
+            //DONE: OWASP A3:2017 - Sensitive Data Exposure
             // Log reveals sensitive info
             logger.info("Query: " + query);
 
-            //FIXME: OWASP A10:2017 - Insufficient Logging & Monitoring
+            //DOEN: OWASP A10:2017 - Insufficient Logging & Monitoring
             // return value not logged
-            //FIXME: OWASP A8:2013 - CSRF
+            //DONE: OWASP A8:2013 - CSRF
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setString(1, password);
             stmt.setString(2,username);
             int result=  stmt.executeUpdate();
             logger.info("update password. Affected rows : "+result);
-            //FIXME: OWASP A5:2017 - Broken Access Control
+            //DONE: OWASP A5:2017 - Broken Access Control
             //  Cookie used without any signature
-            //FIXME: OWASP A3:2017 - Sensitive Data Exposure
+            //DONE: OWASP A3:2017 - Sensitive Data Exposure
             //  Password stored as plaintext on client-side
-            //FIXME: OWASP A2:2017 - Broken Authentication
+            //DONE: OWASP A2:2017 - Broken Authentication
             //  Parameter "Remember me" is not observed
             //  Cookie security settings (httpOnly, secure, age, domain, path, same-site)
             //  For same-site, see: https://stackoverflow.com/a/43106260/459391
             //      response.setHeader("Set-Cookie", "key=value; HttpOnly; SameSite=strict")
-            Cookie pCookie = new Cookie("password", password);
-            response.addCookie(pCookie);
 
             response.sendRedirect("user.jsp");
 

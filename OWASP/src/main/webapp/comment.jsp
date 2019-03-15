@@ -7,10 +7,10 @@
 </head>
 <body>
 <div class="container">
-    <%--FIXME: OWASP A5:2017 - Broken Access Control
+    <%--DONE: OWASP A5:2017 - Broken Access Control
         This page must not be accessible to unauthenticated users
     --%>
-    <%--FIXME: OWASP A2:2017 - Broken Authentication
+    <%--DONE: OWASP A2:2017 - Broken Authentication
         Session data about the currently authenticated user is retrieved from cookies
     --%>
 
@@ -30,10 +30,11 @@
     <br/>
 
     <form method="post" action="comment.do">
+        <INPUT type="HIDDEN" name="CSRF_NONCE" value="<%=response.encodeURL(null)%>">
         <label for="comment"></label>
 
         <%--FIXME: OWASP A5:2017 - Broken Access Control --%>
-        <input type="hidden" name="username" value="${cookie['username'].value}">
+        <!--<input type="hidden" name="username" value="${cookie['username'].value}">-->
 
         <textarea id="comment" name="comment"
                   class="form-control row"

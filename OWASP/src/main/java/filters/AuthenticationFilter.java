@@ -18,8 +18,18 @@ public class AuthenticationFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
 
+
+
+
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         HttpServletRequest httpRequest= (HttpServletRequest) request;
+        if(httpRequest.getRequestURI().equals("/")){
+            if(httpRequest.getSession()!=null &&
+             httpRequest.getSession().getAttribute("username")!=null && httpRequest.getSession().getAttribute("username")!=""){
+                ((HttpServletResponse) response).sendRedirect("/user.jsp");
+                return;
+            }
+        }
         if(httpRequest.getRequestURI().equals("/index.jsp") ||
                 httpRequest.getRequestURI().equals("/") ||
                 httpRequest.getRequestURI().startsWith("/login.do") ||
@@ -29,10 +39,16 @@ public class AuthenticationFilter implements Filter {
             chain.doFilter(request, response);
             return;
         }
-       if(httpRequest.getSession()!=null &&  httpRequest.getSession().getAttribute("username")!=null &&
+       if(httpRequest.getSession(true)!=null &&  httpRequest.getSession(true).getAttribute("username")!=null &&
                !httpRequest.getSession().getAttribute("username").toString().equalsIgnoreCase("")){
-            //tdoo by ahmadi check admin pages
-           chain.doFilter(request, response);
+            if(httpRequest.getRequestURI().startsWith("/admin")){
+                if (!"admin".equals(httpRequest.getSession().getAttribute("role").toString())) {
+                    ((HttpServletResponse) response).sendRedirect("/unauthorized.jsp");
+                }
+                chain.doFilter(request, response);
+            }else{
+                chain.doFilter(request, response);
+            }
        }
        else{
            ((HttpServletResponse) response).sendRedirect("/");

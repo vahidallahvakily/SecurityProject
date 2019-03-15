@@ -12,11 +12,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 
 @WebServlet("/admin.do")
@@ -29,8 +28,8 @@ public class AdminServlet extends HttpServlet {
     static {
         try {
             InitialContext ctx = new InitialContext();
-            //FIXME: OWASP A5:2017 - Broken Access Control (root privileges)
-            ds = (DataSource) ctx.lookup("jdbc/MySQL_root_DataSource");
+            //DONE: OWASP A5:2017 - Broken Access Control (root privileges)
+            ds = (DataSource) ctx.lookup("jdbc/MySQL_crud_DataSource");
         } catch (NamingException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -41,8 +40,8 @@ public class AdminServlet extends HttpServlet {
                          HttpServletResponse response)
             throws IOException {
 
-        //FIXME: OWASP A5:2017 - Broken Access Control
-        String role = getCookieByName(request, "role");
+        //DONE OWASP A5:2017 - Broken Access Control
+        String role = request.getSession().getAttribute("role").toString();
         if (!"admin".equals(role)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
                     "You must be a system admin!");
@@ -53,16 +52,19 @@ public class AdminServlet extends HttpServlet {
 
         StringBuilder query = new StringBuilder();
         StringBuilder list = new StringBuilder();
+        List<String> lstParameters=new ArrayList<>();
         query.append("UPDATE guestbook SET approved = (CASE id ");
 
         Enumeration<String> paramIds = request.getParameterNames();
         int count = 0;
-
+        //ignore nounce
+        paramIds.nextElement();
         while (paramIds.hasMoreElements()) {
             String id = paramIds.nextElement();
             String val = request.getParameter(id);
-            query.append(String.format("WHEN '%s' THEN '%s' ",
-                    id, val));
+            query.append(String.format("WHEN ? THEN ? "));
+            lstParameters.add(id);
+            lstParameters.add(val);
             list.append(String.format("'%s', ", id));
             count++;
         }
@@ -80,14 +82,17 @@ public class AdminServlet extends HttpServlet {
 
         try (Connection connection = ds.getConnection()) {
 
-            Statement st = connection.createStatement();
+            PreparedStatement st = connection.prepareStatement(query.toString());
 
-            //FIXME: OWASP A10:2017 - Insufficient Logging & Monitoring
+            //DONE: OWASP A10:2017 - Insufficient Logging & Monitoring
             // return value not logged
             //FIXED By Logging result
-            //FIXME: OWASP A1:2017 - Injection
-            //FIXME: OWASP A8:2013 - CSRF
-            int result = st.executeUpdate(query.toString());
+            //DONE: OWASP A1:2017 - Injection
+            //DONE: OWASP A8:2013 - CSRF
+            for(int index=1;index<=lstParameters.size();index++){
+                st.setString(index,lstParameters.get(index-1));
+            }
+            int result = st.executeUpdate();
 
             logger.info("Query result: " + result);
 

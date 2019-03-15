@@ -27,11 +27,13 @@ public class CSPFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
 
+        chain.doFilter(request, response);
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         HttpServletRequest httpRequest= (HttpServletRequest) request;
         httpResponse.setHeader("Content-Security-Policy", "script-src 'self'");
         httpResponse.setHeader("Set-Cookie", "HttpOnly; SameSite=strict");
-        chain.doFilter(request, response);
+        httpResponse.setHeader("X-XSS-Protection", "0");
+
     }
 
     @Override

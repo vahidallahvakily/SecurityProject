@@ -14,10 +14,10 @@
 
 <div class="container">
 
-    <%--FIXME: OWASP A5:2017 - Broken Access Control
+    <%--DONE: OWASP A5:2017 - Broken Access Control
         This page must not be accessible to unauthenticated users
     --%>
-    <%--FIXME: OWASP A2:2017 - Broken Authentication
+    <%--DONE: OWASP A2:2017 - Broken Authentication
         Session data about the currently authenticated user is retrieved from cookies
     --%>
 
@@ -57,7 +57,7 @@
     </div>
 
     <div class="row">
-        <%--FIXME: OWASP A3:2017 - Sensitive Data Exposure
+        <%--DONE: OWASP A3:2017 - Sensitive Data Exposure
             Sensitive information is added to DOM (Document Object Model)
             It's accessible by JavaScript, even if the cookie isn't
         --%>

@@ -32,7 +32,7 @@ public class MyCsrfPreventionFilter extends MyCsrfPreventionFilterBase {
 
     private final Set<String> entryPoints = new HashSet<>();
 
-    private int nonceCacheSize = 5;
+    private int nonceCacheSize = 50;
 
     /**
      * Entry points are URLs that will not be tested for the presence of a valid
@@ -83,15 +83,17 @@ public class MyCsrfPreventionFilter extends MyCsrfPreventionFilterBase {
             if ("/".equals(getRequestedPath(req)))
                 skipNonceCheck = true;
 
-            if ("/static/".equals(getRequestedPath(req).substring(0, 8)))
-                skipNonceCheck = true;
+            if ("/static/".equals(getRequestedPath(req).substring(0, 8))){
+                skipNonceCheck=true;
+
+            }
 
             if (MyConstants.METHOD_GET.equals(req.getMethod())
-                    && entryPoints.contains(getRequestedPath(req))) {
+                    || entryPoints.contains(getRequestedPath(req))) {
                 skipNonceCheck = true;
             }
 
-            HttpSession session = req.getSession(false);
+            HttpSession session = req.getSession(true);
 
             @SuppressWarnings("unchecked")
             LruCache<String> nonceCache = (session == null) ? null

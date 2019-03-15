@@ -58,6 +58,7 @@
     <br/>
 
     <form action="upload.do" method="post" enctype="multipart/form-data">
+        <INPUT type="HIDDEN" name="CSRF_NONCE" value="<%=response.encodeURL(null)%>">
         <div class="form-group row">
             <div class="col-md-4">
                 <div class="custom-file">

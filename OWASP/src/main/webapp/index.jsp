@@ -12,17 +12,17 @@
 
     <hr>
 
-    <%--FIXME: OWASP A2:2017 - Broken Authentication
+    <%--DONE: OWASP A2:2017 - Broken Authentication
         Redirect user if he has already logged in
     --%>
 
-    <%--FIXME: OWASP A3:2017 - Sensitive Data Exposure
+    <%--DONE: OWASP A3:2017 - Sensitive Data Exposure
         1) URLs are often logged by web servers.
            Sensitive data such as passwords must not be included in URLs.
            Use POST method!
         2) Use TLS.
     --%>
-    <form action="login.do" method="get">
+    <form action="login.do" method="post">
 
         <INPUT type="HIDDEN" name="CSRF_NONCE" value="<%=response.encodeURL(null)%>">
 

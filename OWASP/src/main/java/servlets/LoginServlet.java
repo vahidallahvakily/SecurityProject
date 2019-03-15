@@ -25,14 +25,14 @@ public class LoginServlet extends HttpServlet {
     static {
         try {
             InitialContext ctx = new InitialContext();
-            ds = (DataSource) ctx.lookup("jdbc/MySQL_root_DataSource");
+            ds = (DataSource) ctx.lookup("jdbc/MySQL_crud_DataSource");
         } catch (NamingException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
     @Override
-    protected void doGet(HttpServletRequest request,
+    protected void doPost(HttpServletRequest request,
                          HttpServletResponse response)
             throws IOException {
 
@@ -48,7 +48,7 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        //FIXME: OWASP A7:2017 - Cross-Site Scripting (XSS)
+        //DONE: OWASP A7:2017 - Cross-Site Scripting (XSS)
         // Category: Reflected XSS (AKA Non-Persistent or Type II)
         // Category: Server XSS
 
@@ -68,43 +68,9 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        //FIXME: OWASP A1:2017 - Injection
-        //FIXME: Use "LIMIT 1" at the end of query to improve performance
-        /*String query = String.format("select * from users " +
-                        "where username = '%s' " +
-                        "and password = '%s'",
-                userParam, passParam);
+        //DONE: OWASP A1:2017 - Injection
+        //DONE: Use "LIMIT 1" at the end of query to improve performance
 
-
-        //FIXME: OWASP A3:2017 - Sensitive Data Exposure
-        logger.info("Query: " + query);
-
-        String username, password, role;
-
-        try (Connection connection = ds.getConnection()) {
-
-            Statement st = connection.createStatement();
-
-            ResultSet rs = st.executeQuery(query);
-
-            if (!rs.next()) {
-                logger.warning("User not found!");
-
-                response.sendRedirect(response.encodeRedirectURL("failed.jsp"));
-                return;
-            }
-
-            username = rs.getString("username");
-            password = rs.getString("password");
-            role = rs.getString("role");
-
-            logger.info("User found.");
-
-        } catch (SQLException sqlException) {
-            logger.warning(sqlException.getMessage());
-            response.sendRedirect("failed.jsp");
-            return;
-        }*/
 
 
         logger.info("Received request from " + request.getRemoteAddr());
@@ -152,7 +118,9 @@ public class LoginServlet extends HttpServlet {
                     "update users set LAST_LOGON = CURRENT_TIMESTAMP where id = ? LIMIT 1");
             pstmt.setInt(1, userId);
             pstmt.executeUpdate();
-
+            request.getSession().setAttribute("username",username);
+            request.getSession().setAttribute("userId",userId);
+            request.getSession().setAttribute("role",role);
 
         } catch (SQLException sqlException) {
             logger.warning(sqlException.getMessage());
@@ -160,8 +128,7 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        request.getSession().setAttribute("username",username);
-        request.getSession().setAttribute("role",role);
+
         //FIXME: OWASP A5:2017 - Broken Access Control
         //  Cookie used without any signature
         Cookie uCookie = new Cookie("token", username);
