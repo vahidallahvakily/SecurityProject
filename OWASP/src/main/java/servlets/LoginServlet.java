@@ -1,7 +1,5 @@
 package servlets;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -9,10 +7,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.*;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import org.jasypt.util.password.StrongPasswordEncryptor;
+import com.vaadin.server.VaadinService;
+import com.vaadin.server.VaadinSession;
+import services.UserService;
 
 @WebServlet("/login.do")
 public class LoginServlet extends HttpServlet {
@@ -22,19 +23,16 @@ public class LoginServlet extends HttpServlet {
     private static Pattern usernamePattern = Pattern.compile("^[A-Za-z0-9_.]+$");
     private Logger logger = Logger.getLogger(getClass().getName());
 
-    static {
-        try {
-            InitialContext ctx = new InitialContext();
-            ds = (DataSource) ctx.lookup("jdbc/MySQL_crud_DataSource");
-        } catch (NamingException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
+    private static final String COOKIE_NAME = "remember-me";
+    public static final String SESSION_USERNAME = "username";
+
+
 
     @Override
     protected void doPost(HttpServletRequest request,
                          HttpServletResponse response)
             throws IOException {
+
 
         logger.info("Received request from " + request.getRemoteAddr());
 
@@ -71,71 +69,63 @@ public class LoginServlet extends HttpServlet {
         //DONE: OWASP A1:2017 - Injection
         //DONE: Use "LIMIT 1" at the end of query to improve performance
 
-
-
-        logger.info("Received request from " + request.getRemoteAddr());
-
-        String username, password, role;
-        String jasypt_pass;
-
-        try (Connection connection = ds.getConnection()) {
-
-            // Prepared statements are NOT susceptible to SQL Injection
-            PreparedStatement pstmt = connection.prepareStatement(
-                    "select * from users where username = ?  LIMIT 1");
-
-            pstmt.setString(1, userParam);
-
-            ResultSet rs = pstmt.executeQuery();
-
-            if (!rs.next()) {
-                logger.info("User not found!");
-
-                response.sendRedirect("failed.jsp");
-                return;
+        if (isAuthenticated(request) || UserService.isAuthenticUser(userParam, passParam, request, response)) {
+                request.setAttribute(SESSION_USERNAME, userParam);
+           if (request.getAttribute("remember") != null && Boolean.parseBoolean( request.getAttribute("remember").toString())) {
+                rememberUser(userParam, response);
             }
-            StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
-
-            jasypt_pass = rs.getString("password");
-
-            if (!passwordEncryptor.checkPassword(passParam, jasypt_pass)) {
-                logger.warning(String.format("Attempted login by username %s with wrong password.",
-                        userParam));
-
-                // The error should NOT differ from the case where username is wrong,
-                // to prevent "username harvesting"
-                response.sendRedirect(String.format("%s/error.jsp?errno=0", request.getContextPath()));
-                return;
-            }
-
-            username = rs.getString("username");
-            password = rs.getString("password");
-            role = rs.getString("role");
-            int userId = rs.getInt("id");
-
-
-            pstmt = connection.prepareStatement(
-                    "update users set LAST_LOGON = CURRENT_TIMESTAMP where id = ? LIMIT 1");
-            pstmt.setInt(1, userId);
-            pstmt.executeUpdate();
-            request.getSession().setAttribute("username",username);
-            request.getSession().setAttribute("userId",userId);
-            request.getSession().setAttribute("role",role);
-
-        } catch (SQLException sqlException) {
-            logger.warning(sqlException.getMessage());
-            response.sendRedirect("failed.jsp");
-            return;
+            response.sendRedirect("user.jsp");
         }
-
 
         //FIXME: OWASP A5:2017 - Broken Access Control
         //  Cookie used without any signature
-        Cookie uCookie = new Cookie("token", username);
-        response.addCookie(uCookie);
+/*        Cookie uCookie = new Cookie("token", username);
+        response.addCookie(uCookie);*/
 
 
+    }
 
-        response.sendRedirect("user.jsp");
+    public static boolean isAuthenticated(HttpServletRequest request) {
+        return request.getSession().getAttribute(SESSION_USERNAME) != null
+                || loginRememberedUser(request);
+
+    }
+
+    public static Optional<Cookie> getRememberMeCookie(HttpServletRequest request) {
+
+        Cookie[] cookies = request.getCookies();
+        return Arrays.stream(cookies)
+                .filter(c -> c.getName().equals(COOKIE_NAME))
+                .findFirst();
+    }
+
+    private static boolean loginRememberedUser(HttpServletRequest request) {
+
+        Optional<Cookie> rememberMeCookie = getRememberMeCookie(request);
+
+        if (rememberMeCookie.isPresent()) {
+            String id = rememberMeCookie.get().getValue();
+            String username = UserService.getRememberedUser(id);
+            if (username != null) {
+                VaadinSession.getCurrent().setAttribute(SESSION_USERNAME, username);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void rememberUser(String username, HttpServletResponse response) {
+        String id = UserService.rememberUser(username);
+        Cookie cookie = new Cookie(COOKIE_NAME, id);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24 * 30); // valid for 30 days
+        response.addCookie(cookie);
+    }
+
+    public static void deleteRememberMeCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(COOKIE_NAME, "");
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 }
