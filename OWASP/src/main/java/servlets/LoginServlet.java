@@ -71,7 +71,7 @@ public class LoginServlet extends HttpServlet {
 
         if (isAuthenticated(request) || UserService.isAuthenticUser(userParam, passParam, request, response)) {
                 request.setAttribute(SESSION_USERNAME, userParam);
-           if (request.getAttribute("remember") != null && Boolean.parseBoolean( request.getAttribute("remember").toString())) {
+           if (request.getAttribute("remember") != null && Boolean.parseBoolean(request .getAttribute("remember").toString())) {
                 rememberUser(userParam, response);
             }
             response.sendRedirect("user.jsp");
