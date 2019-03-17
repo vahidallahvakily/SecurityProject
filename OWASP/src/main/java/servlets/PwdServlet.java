@@ -1,5 +1,7 @@
 package servlets;
 
+import org.jasypt.util.password.StrongPasswordEncryptor;
+
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.annotation.WebServlet;
@@ -11,11 +13,14 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @WebServlet("/pwd.do")
 public class PwdServlet extends HttpServlet {
     private static final long serialVersionUID = -8123085861273087650L;
     private static DataSource ds;
+    public static final String STRONG_PASSWORD = "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$";
 
     private Logger logger = Logger.getLogger(getClass().getName());
 
@@ -64,7 +69,11 @@ public class PwdServlet extends HttpServlet {
                 return;
             }
 
-            if(!oldPassword.equalsIgnoreCase(rs.getString("password"))){
+            StrongPasswordEncryptor passwordEncryptor = new StrongPasswordEncryptor();
+
+            String jasypt_pass = rs.getString("password");
+
+            if(!passwordEncryptor.checkPassword(oldPassword, jasypt_pass)){
                 logger.warning("old Password is not correct");
                 response.sendRedirect(response.encodeRedirectURL("failedChangePwd.jsp"));
                 return;
@@ -83,10 +92,18 @@ public class PwdServlet extends HttpServlet {
                 return;
             }
 
-            //FIXME: OWASP A5:2017 - Broken Access Control
+            Pattern pattern = Pattern.compile(STRONG_PASSWORD);
+            Matcher matcher = pattern.matcher(password);
+            if (!matcher.matches()) {
+                logger.warning("password isn't strong enough");
+                response.sendRedirect(response.encodeRedirectURL("failedChangePwd.jsp"));
+                return;
+            }
+
+
+            //DONE: OWASP A5:2017 - Broken Access Control
             // Security policies not checked:
             //  1) new password != old password
-            //  2) minimum password age
             //  3) password complexity
             //  4) password length
 
@@ -103,7 +120,7 @@ public class PwdServlet extends HttpServlet {
             // return value not logged
             //DONE: OWASP A8:2013 - CSRF
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setString(1, password);
+            stmt.setString(1, passwordEncryptor.encryptPassword(password));
             stmt.setString(2,username);
             int result=  stmt.executeUpdate();
             logger.info("update password. Affected rows : "+result);
